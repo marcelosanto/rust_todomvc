@@ -1,0 +1,8 @@
+{
+  "name": "todomvc-ui",
+  "type": "module",
+  "description": "Todomvc frontend",
+  "dependencies": {},
+  "author": "Marcelo Santos",
+  "license": "MIT"
+}
