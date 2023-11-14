@@ -11,6 +11,7 @@ pub struct Todo {
     pub title: String,
 }
 
+#[derive(Default, Clone)]
 pub struct TodoPatch {
     pub cid: Option<i64>,
     pub title: Option<String>,
@@ -24,7 +25,7 @@ pub struct TodoMac;
 
 impl TodoMac {
     pub async fn create(db: &Db, data: TodoPatch) -> Result<Todo, model::Error> {
-        let sql = "INSERTO INTO todo (cid, title) VALUES ($1, $2) returning id, cid, title";
+        let sql = "INSERT INTO todo (cid, title) VALUES ($1, $2) returning id, cid, title";
 
         let query = sqlx::query_as::<_, Todo>(&sql)
             .bind(123_i64)

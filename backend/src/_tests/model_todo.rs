@@ -1,6 +1,25 @@
-use crate::model::db::init_db;
+use crate::model::{db::init_db, todo::TodoPatch};
 
 use super::TodoMac;
+
+#[tokio::test]
+async fn model_todo_create() -> Result<(), Box<dyn std::error::Error>> {
+    // -- FIXTURE
+    let db = init_db().await?;
+
+    let data_fx = TodoPatch {
+        title: Some("text - model_todo_create 1".to_string()),
+        ..Default::default()
+    };
+
+    // -- ACTION
+    let todo_created = TodoMac::create(&db, data_fx.clone()).await?;
+
+    // -- CHECK
+    println!("\n\n--> {:?}", todo_created);
+
+    Ok(())
+}
 
 #[tokio::test]
 async fn model_todo_list() -> Result<(), Box<dyn std::error::Error>> {
@@ -12,7 +31,7 @@ async fn model_todo_list() -> Result<(), Box<dyn std::error::Error>> {
 
     // -- CHECK
     assert_eq!(2, todos.len());
-    
+
     //todo 101
     assert_eq!(101, todos[0].id);
     assert_eq!(123, todos[0].cid);
@@ -23,7 +42,5 @@ async fn model_todo_list() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(123, todos[1].cid);
     assert_eq!("todo 100", todos[1].title);
 
-    
-    
     Ok(())
 }
