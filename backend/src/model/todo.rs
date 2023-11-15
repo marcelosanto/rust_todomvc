@@ -10,21 +10,21 @@ pub struct Todo {
     pub id: i64,
     pub cid: i64,
     pub title: String,
-    pub status: TodoStatus
+    pub status: TodoStatus,
 }
 
-#[derive(Default, Debug,Clone, sqlb::Fields)]
+#[derive(Default, Debug, Clone, sqlb::Fields)]
 pub struct TodoPatch {
     pub title: Option<String>,
-    pub status: Option<TodoStatus>
+    pub status: Option<TodoStatus>,
 }
 
-#[derive(sqlx::Type,Debug, Clone, PartialEq, Eq)]
+#[derive(sqlx::Type, Debug, Clone, PartialEq, Eq)]
 #[sqlx(type_name = "todo_status_enum")]
 #[sqlx(rename_all = "lowercase")]
 pub enum TodoStatus {
     Open,
-    Close
+    Close,
 }
 
 sqlb::bindable!(TodoStatus);
@@ -36,17 +36,14 @@ pub struct TodoMac;
 
 impl TodoMac {
     pub async fn create(db: &Db, data: TodoPatch) -> Result<Todo, model::Error> {
-        // let sql = "INSERT INTO todo (cid, title) VALUES ($1, $2) returning id, cid, title, status";
-
-        // let query = sqlx::query_as::<_, Todo>(&sql)
-        //     .bind(123_i64)
-        //     .bind(data.title.unwrap_or_else(|| "untitled".to_string()));
+        let mut fields = data.not_none_fields();
+        fields.push(("cid", 123).into());
 
         let sb = sqlb::insert()
-        .table("todo")
-        .data(data.all_fields())
-        .returning(&["id", "cid", "title", "status"]);
-        
+            .table("todo")
+            .data(fields)
+            .returning(&["id", "cid", "title", "status"]);
+
         let todo = sb.fetch_one(db).await?;
 
         Ok(todo)
