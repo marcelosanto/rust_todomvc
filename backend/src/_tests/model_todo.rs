@@ -56,12 +56,12 @@ async fn model_todo_get_wrong_id() -> Result<(), Box<dyn std::error::Error>> {
     let result = TodoMac::get(&db, &utx, 999).await;
 
     match result {
-        Ok(_) => assert!(false, "Should not succeed"),
+        Ok(_) => panic!("Should not succeed"),
         Err(model::Error::EntityNotFound(typ, id)) => {
             assert_eq!("todo", typ);
             assert_eq!(999.to_string(), id)
         }
-        other_error => assert!(false, "Wrong Error {:?}", other_error),
+        other_error => panic!("Wrong Error {:?}", other_error),
     }
 
     Ok(())
