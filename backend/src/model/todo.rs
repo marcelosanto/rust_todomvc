@@ -1,4 +1,4 @@
-use sqlb::HasFields;
+use sqlb::{HasFields, Raw};
 use warp::filters::query;
 
 use super::db::Db;
@@ -60,17 +60,9 @@ impl TodoMac {
             .columns(Self::COLUMNS)
             .and_where_eq("id", id);
 
-        let todo = sb
-            .fetch_one(db)
-            .await
-            .map_err(|sqlx_error| match sqlx_error {
-                sqlx::Error::RowNotFound => {
-                    model::Error::EntityNotFound(Self::TABLE, id.to_string())
-                }
-                other => model::Error::SqlxError(other),
-            })?;
+        let result = sb.fetch_one(db).await;
 
-        Ok(todo)
+        handle_fetch_on_result(result, Self::TABLE, id)
     }
 
     pub async fn update(
@@ -79,15 +71,19 @@ impl TodoMac {
         id: i64,
         data: TodoPatch,
     ) -> Result<Todo, model::Error> {
+        let mut fields = data.not_none_fields();
+        fields.push(("mid", _utx.user_id).into());
+        fields.push(("mtime", Raw("now()")).into());
+
         let sb = sqlb::update()
             .table(Self::TABLE)
-            .data(data.not_none_fields())
+            .data(fields)
             .and_where_eq("id", id)
             .returning(Self::COLUMNS);
 
-        let todo = sb.fetch_one(db).await?;
+        let result = sb.fetch_one(db).await;
 
-        Ok(todo)
+        handle_fetch_on_result(result, Self::TABLE, id)
     }
 
     pub async fn list(db: &Db, _utx: &UserCtx) -> Result<Vec<Todo>, model::Error> {
@@ -99,6 +95,17 @@ impl TodoMac {
         let todos = sb.fetch_all(db).await?;
 
         Ok(todos)
+    }
+
+    pub async fn delete(db: &Db, _utx: &UserCtx, id: i64) -> Result<Todo, model::Error> {
+        let sb = sqlb::delete()
+            .table(Self::TABLE)
+            .returning(Self::COLUMNS)
+            .and_where_eq("id", id);
+
+        let result = sb.fetch_one(db).await;
+
+        handle_fetch_on_result(result, Self::TABLE, id)
     }
 }
 
