@@ -1,5 +1,6 @@
 use crate::{
     model::{
+        self,
         db::init_db,
         todo::{TodoPatch, TodoStatus},
     },
@@ -32,7 +33,7 @@ async fn model_todo_create() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[tokio::test]
-async fn model_todo_get() -> Result<(), Box<dyn std::error::Error>> {
+async fn model_todo_get_ok() -> Result<(), Box<dyn std::error::Error>> {
     let db = init_db().await?;
 
     let utx = utx_from_token("123").await?;
@@ -47,7 +48,27 @@ async fn model_todo_get() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[tokio::test]
-async fn model_todo_update() -> Result<(), Box<dyn std::error::Error>> {
+async fn model_todo_get_wrong_id() -> Result<(), Box<dyn std::error::Error>> {
+    let db = init_db().await?;
+
+    let utx = utx_from_token("123").await?;
+
+    let result = TodoMac::get(&db, &utx, 999).await;
+
+    match result {
+        Ok(_) => assert!(false, "Should not succeed"),
+        Err(model::Error::EntityNotFound(typ, id)) => {
+            assert_eq!("todo", typ);
+            assert_eq!(999.to_string(), id)
+        }
+        other_error => assert!(false, "Wrong Error {:?}", other_error),
+    }
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn model_todo_update_ok() -> Result<(), Box<dyn std::error::Error>> {
     let db = init_db().await?;
 
     let utx = utx_from_token("123").await?;

@@ -60,7 +60,15 @@ impl TodoMac {
             .columns(Self::COLUMNS)
             .and_where_eq("id", id);
 
-        let todo = sb.fetch_one(db).await?;
+        let todo = sb
+            .fetch_one(db)
+            .await
+            .map_err(|sqlx_error| match sqlx_error {
+                sqlx::Error::RowNotFound => {
+                    model::Error::EntityNotFound(Self::TABLE, id.to_string())
+                }
+                other => model::Error::SqlxError(other),
+            })?;
 
         Ok(todo)
     }
@@ -95,6 +103,21 @@ impl TodoMac {
 }
 
 // endregion: TodoMac
+
+// region: Utils
+
+fn handle_fetch_on_result(
+    result: Result<Todo, sqlx::Error>,
+    typ: &'static str,
+    id: i64,
+) -> Result<Todo, model::Error> {
+    result.map_err(|sqlx_error| match sqlx_error {
+        sqlx::Error::RowNotFound => model::Error::EntityNotFound(typ, id.to_string()),
+        other => model::Error::SqlxError(other),
+    })
+}
+
+// endregion: Utils
 
 #[cfg(test)]
 #[path = "../_tests/model_todo.rs"]
