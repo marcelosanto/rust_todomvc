@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 tokio = {version = "1.34.0", features = ["full"]}
 futures = "0.3.29"
-thiserror = "1.0"
+thiserror = "1.0.50"
 
 #JSON Libs
 serde = "1.0.192"
